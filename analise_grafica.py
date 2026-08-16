@@ -384,4 +384,121 @@ class AnaliseGrafica:
     
     def grafico_radar_governos(self):
         """Gráfico 7: Radar comparativo"""
-        print("\n📊 Gerando gráfico radar...")                
+        print("\n📊 Gerando gráfico radar...")  
+
+         # Calcular métricas por governo
+        metricas = {}
+        for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
+            dados = self.df[self.df['Governo'] == governo]
+            if len(dados) > 0:
+                metricas[governo] = {
+                    'Média Desemprego': dados['Taxa_Desemprego'].mean(),
+                    'Mínimo': dados['Taxa_Desemprego'].min(),
+                    'Máximo': dados['Taxa_Desemprego'].max(),
+                    'Estabilidade': 100 - dados['Taxa_Desemprego'].std(),
+                    'Rendimento Médio': dados['Rendimento_Medio'].mean() / 100
+                }
+        
+        # Preparar dados para radar
+        categories = list(metricas['Dilma'].keys())
+        values = {gov: [metricas[gov][cat] for cat in categories] 
+                 for gov in metricas.keys()}
+        
+        # Normalizar para 0-100
+        for cat in categories:
+            max_val = max([metricas[gov][cat] for gov in metricas.keys()])
+            if max_val > 0:
+                for gov in metricas.keys():
+                    values[gov][categories.index(cat)] = (metricas[gov][cat] / max_val) * 100
+        
+        # Plotar radar
+        angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+        angles += angles[:1]
+        
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection='polar'))
+        
+        for governo, cor in CORES.items():
+            if governo in values:
+                vals = values[governo]
+                vals += vals[:1]
+                ax.plot(angles, vals, 'o-', linewidth=2, label=governo, color=cor)
+                ax.fill(angles, vals, alpha=0.1, color=cor)
+        
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(categories, fontsize=12)
+        ax.set_ylim(0, 100)
+        ax.set_title('Radar Comparativo por Governo', fontsize=18, fontweight='bold', pad=20)
+        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.0))
+        ax.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig('7_radar_governos.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '7_radar_governos.png'")
+    
+    def grafico_sazonalidade(self):
+        """Gráfico 8: Análise sazonal"""
+        print("\n📊 Gerando análise sazonal...")
+        
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        
+        # 1. Médias por trimestre
+        ax1 = axes[0, 0]
+        medias_trim = self.df.groupby('Trimestre')['Taxa_Desemprego'].mean()
+        ax1.bar(medias_trim.index, medias_trim.values, 
+               color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])
+        ax1.set_xlabel('Trimestre', fontsize=12)
+        ax1.set_ylabel('Taxa Média de Desemprego (%)', fontsize=12)
+        ax1.set_title('Média por Trimestre', fontsize=14, fontweight='bold')
+        ax1.grid(True, alpha=0.3)
+        
+        # 2. Boxplot por trimestre
+        ax2 = axes[0, 1]
+        self.df.boxplot(column='Taxa_Desemprego', by='Trimestre', ax=ax2)
+        ax2.set_title('Distribuição por Trimestre', fontsize=14, fontweight='bold')
+        ax2.set_xlabel('Trimestre', fontsize=12)
+        ax2.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        
+        # 3. Variação sazonal
+        ax3 = axes[1, 0]
+        for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
+            dados = self.df[self.df['Governo'] == governo]
+            if len(dados) > 0:
+                medias = dados.groupby('Trimestre')['Taxa_Desemprego'].mean()
+                ax3.plot(medias.index, medias.values, 'o-', 
+                        label=governo, color=CORES[governo], linewidth=2)
+        
+        ax3.set_xlabel('Trimestre', fontsize=12)
+        ax3.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        ax3.set_title('Sazonalidade por Governo', fontsize=14, fontweight='bold')
+        ax3.legend()
+        ax3.grid(True, alpha=0.3)
+        
+        # 4. Mapa de calor sazonal
+        ax4 = axes[1, 1]
+        pivot = self.df.pivot_table(index='Ano', columns='Trimestre', 
+                                   values='Taxa_Desemprego', aggfunc='mean')
+        im = ax4.imshow(pivot, cmap='RdYlGn_r', aspect='auto')
+        ax4.set_xticks(range(len(pivot.columns)))
+        ax4.set_xticklabels(pivot.columns)
+        ax4.set_yticks(range(len(pivot.index)))
+        ax4.set_yticklabels(pivot.index)
+        ax4.set_xlabel('Trimestre', fontsize=12)
+        ax4.set_ylabel('Ano', fontsize=12)
+        ax4.set_title('Mapa de Calor Sazonal', fontsize=14, fontweight='bold')
+        plt.colorbar(im, ax=ax4, label='Taxa de Desemprego (%)')
+        
+        plt.suptitle('Análise de Sazonalidade do Desemprego', 
+                    fontsize=18, fontweight='bold')
+        plt.tight_layout()
+        plt.savefig('8_sazonalidade.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '8_sazonalidade.png'")
+    
+    def grafico_indicadores_multiplos(self):
+        """Gráfico 9: Múltiplos indicadores"""
+        print("\n📊 Gerando gráfico de múltiplos indicadores...")
+        
+        fig, axes = plt.subplots(3, 1, figsize=(16, 14))
+        
+                     
