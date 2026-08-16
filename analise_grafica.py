@@ -100,3 +100,100 @@ class AnaliseGrafica:
                 ax.plot(dados['Data'], dados['Taxa_Desemprego'],
                        label=governo, color=CORES[governo],
                        linewidth=2.5, marker='o', markersize=6)
+        
+        # Adicionar linhas verticais para mudanças de governo
+        for governo, (ano, _) in [('Dilma', (2012,)), ('Temer', (2016,)), 
+                                   ('Bolsonaro', (2019,)), ('Lula', (2023,))]:
+            ax.axvline(x=pd.Timestamp(f'{ano}-01-01'), 
+                      color='gray', linestyle='--', alpha=0.3)
+        
+        # Adicionar linha de média geral
+        media_geral = self.df['Taxa_Desemprego'].mean()
+        ax.axhline(y=media_geral, color='black', linestyle=':', 
+                  alpha=0.6, linewidth=1.5, label=f'Média Geral: {media_geral:.1f}%')
+        
+        # Adicionar área de tendência
+        z = np.polyfit(self.df['Data'].map(pd.Timestamp.toordinal), 
+                      self.df['Taxa_Desemprego'], 3)
+        p = np.poly1d(z)
+        x_trend = self.df['Data']
+        y_trend = p(x_trend.map(pd.Timestamp.toordinal))
+        ax.plot(x_trend, y_trend, 'k--', alpha=0.5, linewidth=2, 
+               label='Tendência Polinomial')
+        
+        # Configurações do gráfico
+        ax.set_title('Evolução da Taxa de Desemprego no Brasil (2012-2026)', 
+                    fontsize=18, fontweight='bold')
+        ax.set_xlabel('Data', fontsize=14)
+        ax.set_ylabel('Taxa de Desemprego (%)', fontsize=14)
+        ax.legend(loc='upper left', fontsize=12)
+        ax.grid(True, alpha=0.3)
+        
+        # Formatar datas
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        ax.xaxis.set_major_locator(mdates.YearLocator())
+        
+        # Ajustar limites
+        ax.set_xlim(self.df['Data'].min(), self.df['Data'].max())
+        ax.set_ylim(0, max(self.df['Taxa_Desemprego']) * 1.15)
+        
+        plt.tight_layout()
+        plt.savefig('1_evolucao_completa.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '1_evolucao_completa.png'")
+    
+    def grafico_comparativo_governos(self):
+        """Gráfico 2: Comparação entre governos"""
+        print("\n📊 Gerando gráfico comparativo entre governos...")
+        
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        axes = axes.flatten()
+        
+        # Preparar dados
+        governos = ['Dilma', 'Temer', 'Bolsonaro', 'Lula']
+        
+        for idx, governo in enumerate(governos):
+            ax = axes[idx]
+            dados = self.df[self.df['Governo'] == governo]
+            
+            if len(dados) > 0:
+                # Histograma
+                ax.hist(dados['Taxa_Desemprego'], bins=10, 
+                       color=CORES[governo], alpha=0.7, edgecolor='black')
+                
+                # Estatísticas
+                media = dados['Taxa_Desemprego'].mean()
+                mediana = dados['Taxa_Desemprego'].median()
+                std = dados['Taxa_Desemprego'].std()
+                
+                ax.axvline(media, color='red', linestyle='--', 
+                          linewidth=2, label=f'Média: {media:.1f}%')
+                ax.axvline(mediana, color='green', linestyle=':', 
+                          linewidth=2, label=f'Mediana: {mediana:.1f}%')
+                
+                ax.set_title(f'{governo} ({self.df[self.df["Governo"] == governo]["Ano"].min()}-'
+                           f'{self.df[self.df["Governo"] == governo]["Ano"].max()})', 
+                           fontsize=14, fontweight='bold')
+                ax.set_xlabel('Taxa de Desemprego (%)')
+                ax.set_ylabel('Frequência')
+                ax.legend()
+                ax.grid(True, alpha=0.3)
+        
+        plt.suptitle('Distribuição da Taxa de Desemprego por Governo', 
+                    fontsize=18, fontweight='bold')
+        plt.tight_layout()
+        plt.savefig('2_comparativo_governos.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '2_comparativo_governos.png'")
+    
+    def grafico_boxplot_governos(self):
+        """Gráfico 3: Boxplot comparativo"""
+        print("\n📊 Gerando boxplot comparativo...")
+        
+        fig, ax = plt.subplots(figsize=(14, 8))
+        
+        # Criar boxplot
+        data = [self.df[self.df['Governo'] == gov]['Taxa_Desemprego'] 
+                for gov in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']]
+        
+        bp = ax.boxplot(data, patch_artist=True, widths=0.6)
