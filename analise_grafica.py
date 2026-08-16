@@ -501,4 +501,82 @@ class AnaliseGrafica:
         
         fig, axes = plt.subplots(3, 1, figsize=(16, 14))
         
-                     
+        # 1. Taxa de Desemprego
+        ax1 = axes[0]
+        for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
+            dados = self.df[self.df['Governo'] == governo]
+            if len(dados) > 0:
+                ax1.plot(dados['Data'], dados['Taxa_Desemprego'],
+                        label=governo, color=CORES[governo],
+                        linewidth=2.5)
+        ax1.set_ylabel('Taxa de Desemprego (%)', fontsize=13)
+        ax1.set_title('Taxa de Desemprego', fontsize=15, fontweight='bold')
+        ax1.legend(loc='upper right')
+        ax1.grid(True, alpha=0.3)
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        
+        # 2. Rendimento Médio
+        ax2 = axes[1]
+        ax2.plot(self.df['Data'], self.df['Rendimento_Medio'], 
+                color='purple', linewidth=2.5)
+        ax2.fill_between(self.df['Data'], self.df['Rendimento_Medio'] - 20,
+                        self.df['Rendimento_Medio'] + 20, alpha=0.2, color='purple')
+        ax2.set_ylabel('Rendimento Médio (R$)', fontsize=13)
+        ax2.set_title('Rendimento Médio Real', fontsize=15, fontweight='bold')
+        ax2.grid(True, alpha=0.3)
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        
+        # 3. Informalidade e Empregos Formais
+        ax3 = axes[2]
+        ax3.plot(self.df['Data'], self.df['Informalidade'], 
+                label='Informalidade', color='orange', linewidth=2.5)
+        ax3.plot(self.df['Data'], self.df['Empregos_Formais'], 
+                label='Empregos Formais (milhões)', color='green', linewidth=2.5)
+        ax3.set_ylabel('Percentual / Milhões', fontsize=13)
+        ax3.set_xlabel('Data', fontsize=13)
+        ax3.set_title('Informalidade e Empregos Formais', fontsize=15, fontweight='bold')
+        ax3.legend(loc='upper right')
+        ax3.grid(True, alpha=0.3)
+        ax3.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        
+        plt.suptitle('Evolução dos Indicadores do Mercado de Trabalho', 
+                    fontsize=18, fontweight='bold')
+        plt.tight_layout()
+        plt.savefig('9_indicadores_multiplos.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '9_indicadores_multiplos.png'")
+    
+    def executar_todas_analises(self):
+        """Executa todas as análises gráficas"""
+        print("\n" + "="*60)
+        print("🚀 INICIANDO ANÁLISE GRÁFICA COMPLETA")
+        print("="*60)
+        
+        self.grafico_evolucao_completa()
+        self.grafico_comparativo_governos()
+        self.grafico_boxplot_governos()
+        self.grafico_correlacao()
+        self.grafico_scatter()
+        self.grafico_tendencias()
+        self.grafico_radar_governos()
+        self.grafico_sazonalidade()
+        self.grafico_indicadores_multiplos()
+        
+        print("\n" + "="*60)
+        print("✅ ANÁLISE GRÁFICA CONCLUÍDA!")
+        print("📁 Gráficos gerados:")
+        print("  1_evolucao_completa.png")
+        print("  2_comparativo_governos.png")
+        print("  3_boxplot_governos.png")
+        print("  4_matriz_correlacao.png")
+        print("  5_scatter_plots.png")
+        print("  6_tendencias.png")
+        print("  7_radar_governos.png")
+        print("  8_sazonalidade.png")
+        print("  9_indicadores_multiplos.png")
+        print("="*60)
+
+# Executar
+if __name__ == "__main__":
+    analise = AnaliseGrafica()
+    analise.executar_todas_analises()              
