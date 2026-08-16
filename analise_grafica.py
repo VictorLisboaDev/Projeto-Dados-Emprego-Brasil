@@ -197,3 +197,133 @@ class AnaliseGrafica:
                 for gov in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']]
         
         bp = ax.boxplot(data, patch_artist=True, widths=0.6)
+
+ # Cores
+        for patch, cor in zip(bp['boxes'], ['#1f77b4', '#ff7f0e', '#d62728', '#2ca02c']):
+            patch.set_facecolor(cor)
+            patch.set_alpha(0.7)
+        
+        ax.set_xticklabels(['Dilma', 'Temer', 'Bolsonaro', 'Lula'])
+        ax.set_ylabel('Taxa de Desemprego (%)', fontsize=14)
+        ax.set_xlabel('Governo', fontsize=14)
+        ax.set_title('Distribuição da Taxa de Desemprego por Governo', 
+                    fontsize=18, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        
+        # Adicionar pontos para visualização
+        for i, gov in enumerate(['Dilma', 'Temer', 'Bolsonaro', 'Lula']):
+            dados = self.df[self.df['Governo'] == gov]['Taxa_Desemprego']
+            x = np.random.normal(i+1, 0.04, len(dados))
+            ax.scatter(x, dados, alpha=0.3, color='black', s=30)
+        
+        plt.tight_layout()
+        plt.savefig('3_boxplot_governos.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '3_boxplot_governos.png'")
+    
+    def grafico_correlacao(self):
+        """Gráfico 4: Matriz de correlação"""
+        print("\n📊 Gerando matriz de correlação...")
+        
+        # Selecionar variáveis
+        vars_corr = ['Taxa_Desemprego', 'Rendimento_Medio', 'Informalidade', 'Empregos_Formais']
+        corr_matrix = self.df[vars_corr].corr()
+        
+        # Criar figura
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Heatmap
+        im = ax.imshow(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+        
+        # Adicionar valores
+        for i in range(len(vars_corr)):
+            for j in range(len(vars_corr)):
+                text = ax.text(j, i, f'{corr_matrix.iloc[i, j]:.2f}',
+                             ha='center', va='center', color='black' if abs(corr_matrix.iloc[i, j]) < 0.7 else 'white',
+                             fontsize=12, fontweight='bold')
+        
+        ax.set_xticks(range(len(vars_corr)))
+        ax.set_yticks(range(len(vars_corr)))
+        ax.set_xticklabels(vars_corr, fontsize=12)
+        ax.set_yticklabels(vars_corr, fontsize=12)
+        
+        plt.colorbar(im, ax=ax, label='Correlação')
+        ax.set_title('Matriz de Correlação do Mercado de Trabalho', 
+                    fontsize=18, fontweight='bold')
+        
+        plt.tight_layout()
+        plt.savefig('4_matriz_correlacao.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '4_matriz_correlacao.png'")
+    
+    def grafico_scatter(self):
+        """Gráfico 5: Gráficos de dispersão"""
+        print("\n📊 Gerando gráficos de dispersão...")
+        
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        
+        # 1. Desemprego vs Rendimento
+        ax1 = axes[0, 0]
+        scatter1 = ax1.scatter(self.df['Rendimento_Medio'], 
+                             self.df['Taxa_Desemprego'],
+                             c=self.df['Ano'], cmap='viridis', 
+                             s=50, alpha=0.6)
+        ax1.set_xlabel('Rendimento Médio (R$)', fontsize=12)
+        ax1.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        ax1.set_title('Desemprego vs Rendimento', fontsize=14, fontweight='bold')
+        ax1.grid(True, alpha=0.3)
+        plt.colorbar(scatter1, ax=ax1, label='Ano')
+        
+        # 2. Desemprego vs Informalidade
+        ax2 = axes[0, 1]
+        scatter2 = ax2.scatter(self.df['Informalidade'], 
+                             self.df['Taxa_Desemprego'],
+                             c=self.df['Ano'], cmap='plasma', 
+                             s=50, alpha=0.6)
+        ax2.set_xlabel('Informalidade (%)', fontsize=12)
+        ax2.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        ax2.set_title('Desemprego vs Informalidade', fontsize=14, fontweight='bold')
+        ax2.grid(True, alpha=0.3)
+        plt.colorbar(scatter2, ax=ax2, label='Ano')
+        
+        # 3. Desemprego vs Empregos Formais
+        ax3 = axes[1, 0]
+        scatter3 = ax3.scatter(self.df['Empregos_Formais'], 
+                             self.df['Taxa_Desemprego'],
+                             c=self.df['Ano'], cmap='inferno', 
+                             s=50, alpha=0.6)
+        ax3.set_xlabel('Empregos Formais (milhões)', fontsize=12)
+        ax3.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        ax3.set_title('Desemprego vs Empregos Formais', fontsize=14, fontweight='bold')
+        ax3.grid(True, alpha=0.3)
+        plt.colorbar(scatter3, ax=ax3, label='Ano')
+        
+        # 4. Múltiplas variáveis
+        ax4 = axes[1, 1]
+        for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
+            dados = self.df[self.df['Governo'] == governo]
+            if len(dados) > 0:
+                ax4.scatter(dados['Rendimento_Medio'], 
+                          dados['Taxa_Desemprego'],
+                          label=governo, color=CORES[governo],
+                          s=50, alpha=0.6)
+        
+        ax4.set_xlabel('Rendimento Médio (R$)', fontsize=12)
+        ax4.set_ylabel('Taxa de Desemprego (%)', fontsize=12)
+        ax4.set_title('Desemprego vs Rendimento por Governo', fontsize=14, fontweight='bold')
+        ax4.legend()
+        ax4.grid(True, alpha=0.3)
+        
+        plt.suptitle('Análise de Correlação do Mercado de Trabalho', 
+                    fontsize=18, fontweight='bold')
+        plt.tight_layout()
+        plt.savefig('5_scatter_plots.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '5_scatter_plots.png'")
+    
+    def grafico_tendencias(self):
+        """Gráfico 6: Tendências e projeções"""
+        print("\n📊 Gerando gráfico de tendências...")
+        
+        fig, ax = plt.subplots(figsize=(16, 8))
+                
