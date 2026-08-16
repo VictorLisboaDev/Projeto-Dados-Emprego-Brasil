@@ -326,4 +326,62 @@ class AnaliseGrafica:
         print("\n📊 Gerando gráfico de tendências...")
         
         fig, ax = plt.subplots(figsize=(16, 8))
+
+# Dados por governo
+        for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
+            dados = self.df[self.df['Governo'] == governo]
+            if len(dados) > 1:
+                # Dados
+                ax.plot(dados['Data'], dados['Taxa_Desemprego'],
+                       'o-', color=CORES[governo], label=governo,
+                       linewidth=2, markersize=6)
                 
+                # Linha de tendência
+                x = np.arange(len(dados))
+                y = dados['Taxa_Desemprego'].values
+                z = np.polyfit(x, y, 1)
+                p = np.poly1d(z)
+                
+                x_trend = np.linspace(0, len(x)-1, 50)
+                y_trend = p(x_trend)
+                
+                x_dates = [dados['Data'].iloc[0] + 
+                          (dados['Data'].iloc[-1] - dados['Data'].iloc[0]) * (t/len(x_trend))
+                          for t in range(len(x_trend))]
+                
+                ax.plot(x_dates, y_trend, '--', color=CORES[governo], 
+                       alpha=0.5, linewidth=1.5)
+        
+        # Adicionar área de projeção
+        ultimos_dados = self.df.iloc[-8:]
+        x_pred = np.arange(len(ultimos_dados), len(ultimos_dados) + 4)
+        z_pred = np.polyfit(np.arange(len(ultimos_dados)), 
+                          ultimos_dados['Taxa_Desemprego'], 1)
+        p_pred = np.poly1d(z_pred)
+        y_pred = p_pred(x_pred)
+        
+        datas_pred = pd.date_range(start=ultimos_dados['Data'].iloc[-1] + pd.Timedelta(days=90), 
+                                  periods=4, freq='Q')
+        
+        ax.plot(datas_pred, y_pred, 'r--', linewidth=2, label='Projeção')
+        ax.fill_between(datas_pred, y_pred - 0.5, y_pred + 0.5, 
+                       alpha=0.2, color='red', label='Intervalo de Confiança')
+        
+        ax.set_title('Tendências da Taxa de Desemprego por Governo', 
+                    fontsize=18, fontweight='bold')
+        ax.set_xlabel('Data', fontsize=14)
+        ax.set_ylabel('Taxa de Desemprego (%)', fontsize=14)
+        ax.legend(loc='best', fontsize=12)
+        ax.grid(True, alpha=0.3)
+        
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        ax.xaxis.set_major_locator(mdates.YearLocator())
+        
+        plt.tight_layout()
+        plt.savefig('6_tendencias.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        print("✅ Gráfico salvo: '6_tendencias.png'")
+    
+    def grafico_radar_governos(self):
+        """Gráfico 7: Radar comparativo"""
+        print("\n📊 Gerando gráfico radar...")                
