@@ -1,3 +1,8 @@
+"""
+Análise Gráfica do Mercado de Trabalho Brasileiro
+Python Puro com Matplotlib e Seaborn - VERSÃO CORRIGIDA
+"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -101,11 +106,18 @@ class AnaliseGrafica:
                        label=governo, color=CORES[governo],
                        linewidth=2.5, marker='o', markersize=6)
         
-        # Adicionar linhas verticais para mudanças de governo
-        for governo, (ano, _) in [('Dilma', (2012,)), ('Temer', (2016,)), 
-                                   ('Bolsonaro', (2019,)), ('Lula', (2023,))]:
+        # Adicionar linhas verticais para mudanças de governo - CORRIGIDO
+        anos_mudanca = [2012, 2016, 2019, 2023]
+        for ano in anos_mudanca:
             ax.axvline(x=pd.Timestamp(f'{ano}-01-01'), 
                       color='gray', linestyle='--', alpha=0.3)
+        
+        # Adicionar rótulos para as mudanças
+        for ano in anos_mudanca:
+            ax.text(pd.Timestamp(f'{ano}-01-01'), 
+                   ax.get_ylim()[1] * 0.95, 
+                   f'{ano}', 
+                   rotation=90, ha='right', va='top', fontsize=10, color='gray')
         
         # Adicionar linha de média geral
         media_geral = self.df['Taxa_Desemprego'].mean()
@@ -197,9 +209,10 @@ class AnaliseGrafica:
                 for gov in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']]
         
         bp = ax.boxplot(data, patch_artist=True, widths=0.6)
-
- # Cores
-        for patch, cor in zip(bp['boxes'], ['#1f77b4', '#ff7f0e', '#d62728', '#2ca02c']):
+        
+        # Cores
+        cores_box = ['#1f77b4', '#ff7f0e', '#d62728', '#2ca02c']
+        for patch, cor in zip(bp['boxes'], cores_box):
             patch.set_facecolor(cor)
             patch.set_alpha(0.7)
         
@@ -238,9 +251,11 @@ class AnaliseGrafica:
         # Adicionar valores
         for i in range(len(vars_corr)):
             for j in range(len(vars_corr)):
-                text = ax.text(j, i, f'{corr_matrix.iloc[i, j]:.2f}',
-                             ha='center', va='center', color='black' if abs(corr_matrix.iloc[i, j]) < 0.7 else 'white',
-                             fontsize=12, fontweight='bold')
+                valor = corr_matrix.iloc[i, j]
+                cor_texto = 'white' if abs(valor) > 0.7 else 'black'
+                ax.text(j, i, f'{valor:.2f}',
+                       ha='center', va='center', color=cor_texto,
+                       fontsize=12, fontweight='bold')
         
         ax.set_xticks(range(len(vars_corr)))
         ax.set_yticks(range(len(vars_corr)))
@@ -326,8 +341,8 @@ class AnaliseGrafica:
         print("\n📊 Gerando gráfico de tendências...")
         
         fig, ax = plt.subplots(figsize=(16, 8))
-
-# Dados por governo
+        
+        # Dados por governo
         for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
             dados = self.df[self.df['Governo'] == governo]
             if len(dados) > 1:
@@ -354,18 +369,19 @@ class AnaliseGrafica:
         
         # Adicionar área de projeção
         ultimos_dados = self.df.iloc[-8:]
-        x_pred = np.arange(len(ultimos_dados), len(ultimos_dados) + 4)
-        z_pred = np.polyfit(np.arange(len(ultimos_dados)), 
-                          ultimos_dados['Taxa_Desemprego'], 1)
-        p_pred = np.poly1d(z_pred)
-        y_pred = p_pred(x_pred)
-        
-        datas_pred = pd.date_range(start=ultimos_dados['Data'].iloc[-1] + pd.Timedelta(days=90), 
-                                  periods=4, freq='Q')
-        
-        ax.plot(datas_pred, y_pred, 'r--', linewidth=2, label='Projeção')
-        ax.fill_between(datas_pred, y_pred - 0.5, y_pred + 0.5, 
-                       alpha=0.2, color='red', label='Intervalo de Confiança')
+        if len(ultimos_dados) > 1:
+            x_pred = np.arange(len(ultimos_dados), len(ultimos_dados) + 4)
+            z_pred = np.polyfit(np.arange(len(ultimos_dados)), 
+                              ultimos_dados['Taxa_Desemprego'], 1)
+            p_pred = np.poly1d(z_pred)
+            y_pred = p_pred(x_pred)
+            
+            datas_pred = pd.date_range(start=ultimos_dados['Data'].iloc[-1] + pd.Timedelta(days=90), 
+                                      periods=4, freq='Q')
+            
+            ax.plot(datas_pred, y_pred, 'r--', linewidth=2, label='Projeção')
+            ax.fill_between(datas_pred, y_pred - 0.5, y_pred + 0.5, 
+                           alpha=0.2, color='red', label='Intervalo de Confiança')
         
         ax.set_title('Tendências da Taxa de Desemprego por Governo', 
                     fontsize=18, fontweight='bold')
@@ -384,9 +400,9 @@ class AnaliseGrafica:
     
     def grafico_radar_governos(self):
         """Gráfico 7: Radar comparativo"""
-        print("\n📊 Gerando gráfico radar...")  
-
-         # Calcular métricas por governo
+        print("\n📊 Gerando gráfico radar...")
+        
+        # Calcular métricas por governo
         metricas = {}
         for governo in ['Dilma', 'Temer', 'Bolsonaro', 'Lula']:
             dados = self.df[self.df['Governo'] == governo]
@@ -398,6 +414,10 @@ class AnaliseGrafica:
                     'Estabilidade': 100 - dados['Taxa_Desemprego'].std(),
                     'Rendimento Médio': dados['Rendimento_Medio'].mean() / 100
                 }
+        
+        if not metricas:
+            print("⚠️ Sem dados para radar")
+            return
         
         # Preparar dados para radar
         categories = list(metricas['Dilma'].keys())
@@ -579,4 +599,4 @@ class AnaliseGrafica:
 # Executar
 if __name__ == "__main__":
     analise = AnaliseGrafica()
-    analise.executar_todas_analises()              
+    analise.executar_todas_analises()
